@@ -1,23 +1,30 @@
 package com.howlstagram.mvvmhowlstagram.login
 
+import android.content.Context
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Base64
+import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.common.api.ApiException
-import com.google.firebase.auth.FirebaseAuth
+import com.howlstagram.mvvmhowlstagram.MainActivity
 import com.howlstagram.mvvmhowlstagram.R
 import com.howlstagram.mvvmhowlstagram.databinding.ActivityLoginBinding
+import java.security.MessageDigest
+import java.security.NoSuchAlgorithmException
+
 
 class LoginActivity : AppCompatActivity() {
-
+    var TAG = "LoginActivity"
     lateinit var binding: ActivityLoginBinding
 
-    //    lateinit var loginViewModel : LoginViewModel
+//        lateinit var loginViewModel : LoginViewModel
     val loginViewModel: LoginViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,7 +37,25 @@ class LoginActivity : AppCompatActivity() {
         binding.lifecycleOwner = this
 
         setObserve()
+        printHashKey(this)
 
+    }
+
+    fun printHashKey(pContext: Context) {
+        try {
+            val info: PackageInfo = pContext.getPackageManager()
+                .getPackageInfo(pContext.getPackageName(), PackageManager.GET_SIGNATURES)
+            for (signature in info.signatures) {
+                val md = MessageDigest.getInstance("SHA")
+                md.update(signature.toByteArray())
+                val hashKey = String(Base64.encode(md.digest(), 0))
+                Log.i(TAG, "printHashKey() Hash Key: $hashKey")
+            }
+        } catch (e: NoSuchAlgorithmException) {
+            Log.e(TAG, "printHashKey()", e)
+        } catch (e: Exception) {
+            Log.e(TAG, "printHashKey()", e)
+        }
     }
 
     fun setObserve() {
@@ -44,6 +69,11 @@ class LoginActivity : AppCompatActivity() {
         loginViewModel.showFindIdActivity.observe(this) {
             if (it) {
                 startActivity(Intent(this, FindActivity::class.java))
+            }
+        }
+        loginViewModel.showMainActivity.observe(this) {
+            if (it) {
+                startActivity(Intent(this, MainActivity::class.java))
             }
         }
     }

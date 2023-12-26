@@ -22,6 +22,8 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
     var showInputNumberActivity: MutableLiveData<Boolean> = MutableLiveData(false)
     var showFindIdActivity: MutableLiveData<Boolean> = MutableLiveData(false)
+    var showMainActivity: MutableLiveData<Boolean> = MutableLiveData(false)
+
     var context = getApplication<Application>().applicationContext
 
     // 구글 로그인 클라이언트를 초기화
@@ -44,10 +46,24 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                     showInputNumberActivity.value = true
                 } else {
                     // 아이디가 있을 때
-
+                    loginEmail()
                 }
             }
+    }
 
+    fun loginEmail() {
+        auth.signInWithEmailAndPassword(id.value.toString(), password.value.toString())
+            .addOnCompleteListener {
+                if (it.isSuccessful) { // 회원가입 성공 시 화면이 넘어감
+                    if (it.result.user?.isEmailVerified == true) {
+                        // 이메일이 인증된 유저는 메인페이지로 넘어감
+                        showMainActivity.value = true
+                    } else {
+                        // 이메일이 인증되지 않은 유저는 번호 입력 페이지로 넘어감
+                        showInputNumberActivity.value = true
+                    }
+                }
+            }
     }
 
     fun loginGoogle(view: View) {
@@ -60,10 +76,13 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         val creadential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(creadential).addOnCompleteListener {
             if (it.isSuccessful) {
-                showInputNumberActivity.value = true
-            } else {
-                // 아이디가 있을 때
-
+                if (it.result.user?.isEmailVerified == true) {
+                    // 이메일이 인증된 유저는 메인페이지로 넘어감
+                    showMainActivity.value = true
+                } else {
+                    // 이메일이 인증되지 않은 유저는 번호 입력 페이지로 넘어감
+                    showInputNumberActivity.value = true
+                }
             }
         }
     }
